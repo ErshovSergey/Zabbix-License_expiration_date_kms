@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.2</version>
+    <date>2021-09-08T19:19:02Z</date>
+    <groups>
+        <group>
+            <name>Windows</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>License_expiration_date_kms</template>
+            <name>Срок активации KMS лицензии Windows.</name>
+            <groups>
+                <group>
+                    <name>Windows</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>License expiration</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>Day to end date of activation</name>
+                    <type>DEPENDENT</type>
+                    <key>DayToEndDateOfActivation</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <description>Возвращает количество дней до окончания активации в виде числа.</description>
+                    <applications>
+                        <application>
+                            <name>License expiration</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>var today = new Date();
+var year = value.replace(/(Windows\(R\), )(.*):(?:\r\n|[\r\n])(.*(\d\d)\.(\d\d)\.(\d\d\d\d).*)/gi, '$6');
+var month = value.replace(/(Windows\(R\), )(.*):(?:\r\n|[\r\n])(.*(\d\d)\.(\d\d)\.(\d\d\d\d).*)/gi, '$5');
+var day = value.replace(/(Windows\(R\), )(.*):(?:\r\n|[\r\n])(.*(\d\d)\.(\d\d)\.(\d\d\d\d).*)/gi, '$4');
+
+var dateEndOfActivation= new Date(year, month-1, day);
+
+//количество ms в день
+var msPerDay = 24*60*60*1000;
+// дней осталось
+//var daysLeft = Math.round((dateEndOfActivation - today.getTime())/msPerDay);
+var daysLeft = Math.round((dateEndOfActivation - today.getTime())/msPerDay);
+return(daysLeft);</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.run[&quot;c:\Windows\System32\cscript.exe /nologo c:\Windows\System32\slmgr.vbs /xpr&quot;]</key>
+                    </master_item>
+                    <triggers>
+                        <trigger>
+                            <expression>{last()}&lt;{$DAY_ALARM}</expression>
+                            <name>DayToEndOfActivation-ALARM</name>
+                            <event_name>Less than {$DAY_ALARM} day(s) to end of Windows activation.</event_name>
+                            <opdata>Less than {$DAY_ALARM} day(s) to end of Windows activation.</opdata>
+                            <priority>HIGH</priority>
+                            <description>Количество дней до окончания активации</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{last()}&lt;{$DAY_INFO}</expression>
+                            <name>DayToEndOfActivation-INFO</name>
+                            <event_name>Less than {$DAY_INFO} day(s) to end of Windows activation.</event_name>
+                            <opdata>Less than {$DAY_INFO} day(s) to end of Windows activation.</opdata>
+                            <priority>INFO</priority>
+                            <description>Количество дней до окончания активации</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                        <trigger>
+                            <expression>{last()}&lt;0</expression>
+                            <name>DayToEndOfActivation-VERYALARM</name>
+                            <event_name>End of Windows activation.</event_name>
+                            <opdata>End of Windows activation.</opdata>
+                            <priority>DISASTER</priority>
+                            <description>Количество дней до окончания активации</description>
+                            <manual_close>YES</manual_close>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <name>License_expiration_date_kms</name>
+                    <key>system.run[&quot;c:\Windows\System32\cscript.exe /nologo c:\Windows\System32\slmgr.vbs /xpr&quot;]</key>
+                    <history>0</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>License expiration</name>
+                        </application>
+                    </applications>
+                </item>
+                <item>
+                    <name>Windows edition</name>
+                    <type>DEPENDENT</type>
+                    <key>WindowsEdition</key>
+                    <delay>0</delay>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <applications>
+                        <application>
+                            <name>License expiration</name>
+                        </application>
+                    </applications>
+                    <preprocessing>
+                        <step>
+                            <type>JAVASCRIPT</type>
+                            <parameters>
+                                <parameter>//
+value=value.replace(/(Windows\(R\), )(.*):(?:\r\n|[\r\n])(.*.*)/,       '$2');
+
+return(value);
+</parameter>
+                            </parameters>
+                        </step>
+                    </preprocessing>
+                    <master_item>
+                        <key>system.run[&quot;c:\Windows\System32\cscript.exe /nologo c:\Windows\System32\slmgr.vbs /xpr&quot;]</key>
+                    </master_item>
+                </item>
+            </items>
+            <macros>
+                <macro>
+                    <macro>{$DAY_ALARM}</macro>
+                    <value>7</value>
+                    <description>Количество дней  - ALARM</description>
+                </macro>
+                <macro>
+                    <macro>{$DAY_INFO}</macro>
+                    <value>30</value>
+                    <description>Количество дней  - INFO</description>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+</zabbix_export>
